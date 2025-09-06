@@ -63,7 +63,11 @@ bot.on("message:text", async (ctx) => {
 
     ctx.session.history.push({ role: "assistant", content: aiText });
 
+<<<<<<< HEAD
     if (!aiText === "") {
+=======
+    if (aiText !== "") {
+>>>>>>> 31b4467 (Change the aiText check to empty string and add a user history only on success conversation)
       addHistory(String(ctx.chat.id), "assistant", aiText);
       console.log("user history added to the db");
       addHistory(String(ctx.chat.id), "user", userMessage);
