@@ -53,12 +53,6 @@ bot.on("message:text", async (ctx) => {
   }
 
   ctx.session.history.push({ role: "user", content: userMessage });
-  try {
-    addHistory(String(ctx.chat.id), "user", userMessage);
-    console.log("user history added to the db");
-  } catch (error) {
-    console.log(error);
-  }
 
   await ctx.api.sendChatAction(String(ctx.chat.id), "typing");
 
@@ -69,8 +63,10 @@ bot.on("message:text", async (ctx) => {
 
     ctx.session.history.push({ role: "assistant", content: aiText });
 
-    if (aiText) {
+    if (!aiText === "") {
       addHistory(String(ctx.chat.id), "assistant", aiText);
+      console.log("user history added to the db");
+      addHistory(String(ctx.chat.id), "user", userMessage);
       console.log("user history added to the db");
       await sendInChunks(ctx, html);
     } else {
