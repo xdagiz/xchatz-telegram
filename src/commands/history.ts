@@ -8,12 +8,7 @@ export function registerHistoryCommand(bot: Bot) {
 
     if (rows.length === 0) return ctx.reply("Your chat history is empty.");
 
-    const formatted = rows
-      .map(
-        (m) =>
-          `${m.role}: ${typeof m.content === "string" ? m.content : JSON.stringify(m.content)}`,
-      )
-      .join("\n\n");
+    const formatted = rows.map((m) => `${m.role}: ${m.content}`).join("\n\n");
     await ctx.reply(
       formatted.length > 4000
         ? formatted.slice(0, 3900) + "\n\n(...truncated)"
