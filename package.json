@@ -1,13 +1,12 @@
 {
   "name": "xchatz",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "build/api/bot.js",
   "type": "module",
   "scripts": {
-    "dev": "tsc && node build/index.js",
+    "dev": "tsx watch ./api/bot.ts",
     "build": "tsc",
-    "start": "node build/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "tsc && node build/api/bot.js"
   },
   "keywords": [],
   "author": "",
@@ -16,12 +15,17 @@
   "devDependencies": {
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^24.3.0",
+    "drizzle-kit": "^0.31.4",
+    "tsx": "^4.20.5",
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "@grammyjs/commands": "^1.2.0",
+    "@libsql/client": "^0.15.14",
     "@openrouter/ai-sdk-provider": "^1.1.2",
     "ai": "^5.0.15",
     "dotenv": "^17.2.1",
+    "drizzle-orm": "^0.44.5",
     "grammy": "^1.38.1",
     "isomorphic-dompurify": "^2.26.0",
     "markdown-it": "^14.1.0"

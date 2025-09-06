@@ -2,15 +2,20 @@
   "compilerOptions": {
     "target": "ES2019",
     "module": "ESNext",
-    "rootDir": "./api",
+    "lib": ["ES2019", "DOM"],
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "outDir": "./build",
-    "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "noEmit": false,
+    "outDir": "build",
+    "rootDir": ".",
+    "types": ["node"]
   },
-  "include": ["api/**/*.ts"],
+  "include": ["api/**/*.ts", "src/**/*.ts"],
   "exclude": ["node_modules", "build"]
 }
