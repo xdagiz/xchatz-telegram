@@ -68,14 +68,14 @@ bot.on("message:text", async (ctx) => {
     const html = markdownToTelegramHtml(aiText);
 
     ctx.session.history.push({ role: "assistant", content: aiText });
-    try {
+
+    if (aiText) {
       addHistory(String(ctx.chat.id), "assistant", aiText);
       console.log("user history added to the db");
-    } catch (error) {
-      console.log(error);
+      await sendInChunks(ctx, html);
+    } else {
+      await ctx.reply("Sorry, there was an error generating a response.");
     }
-
-    await sendInChunks(ctx, html);
   } catch (error) {
     await ctx.reply("Sorry, there was an error generating a response.");
     console.error("Error generating AI response:", error);
