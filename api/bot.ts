@@ -1,7 +1,54 @@
-import { Bot, Context, session, type SessionFlavor } from "grammy";
+import {
+  Bot,
+  Context,
+  session,
+  type SessionFlavor,
+  webhookCallback,
+} from "grammy";
 import "dotenv/config";
 import { streamText, type ModelMessage } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import MarkdownIt from "markdown-it";
+import DOMPurify from "isomorphic-dompurify";
+
+const md = new MarkdownIt({
+  html: false, // Disable raw HTML for safety (you can enable if you sanitize input)
+  linkify: true, // Autoconvert URLs to links
+  typographer: true, // Enable smart quotes, etc.
+});
+
+const TELEGRAM_HTML_WHITELIST = {
+  ALLOWED_TAGS: [
+    "b",
+    "strong",
+    "i",
+    "em",
+    "u",
+    "s",
+    "strike",
+    "del",
+    "code",
+    "pre",
+    "a",
+    "tg-spoiler",
+  ],
+  ALLOWED_ATTR: {
+    a: ["href"],
+  },
+};
+
+export function markdownToTelegramHtml(markdown: string): string {
+  // 1. Convert Markdown => HTML
+  let html = md.render(markdown);
+
+  // 2. Sanitize: keep only tags Telegram supports
+  html = DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: TELEGRAM_HTML_WHITELIST.ALLOWED_TAGS,
+    ALLOWED_ATTR: TELEGRAM_HTML_WHITELIST.ALLOWED_ATTR.a,
+  });
+
+  return html;
+}
 
 const telegramToken = process.env.BOT_TOKEN;
 const openRouterApiKey = process.env.OPENROUTER_API_KEY;
@@ -44,15 +91,23 @@ async function getAIResponse(history: ModelMessage[]): Promise<string> {
   return response.text || "I couldn't generate a response.";
 }
 
+function escapeMarkdownV2(text: string): string {
+  // First escape backslash to avoid double escaping other characters
+  text = text.replace(/\\/g, "\\\\");
+  // Escape all MarkdownV2 reserved characters
+  const pattern = /[_*\[\]\(\)~`>#\+\-=\|\{\}\.!]/g;
+  return text.replace(pattern, (m) => `\\${m}`);
+}
+
 // Function to send long messages in chunks
 async function sendInChunks(
   ctx: MyContext,
   text: string,
-  chunkSize: number = 2000,
+  chunkSize: number = 4000,
 ) {
   for (let i = 0; i < text.length; i += chunkSize) {
     const chunk = text.slice(i, i + chunkSize);
-    await ctx.reply(chunk, { parse_mode: "Markdown" });
+    await ctx.reply(chunk, { parse_mode: "HTML" });
   }
 }
 
@@ -65,6 +120,14 @@ bot.command("start", async (ctx) => {
   await ctx.reply(
     `Hello! 👋 I'm your AI chatbot.\n\nI can have conversations with you and remember our chat history. Use /help to see available commands.`,
   );
+});
+
+bot.command("html", async (ctx) => {
+  const rawMarkdown =
+    "*bold* _italic_ [link](https://example.com) `code` ~strike~";
+  const jsCode = "```js\nconsole.log('Hello, world!');\n```";
+  const html = markdownToTelegramHtml(jsCode + "\n\n" + rawMarkdown);
+  await ctx.reply(html, { parse_mode: "HTML" });
 });
 
 // Command: /help
@@ -116,10 +179,11 @@ bot.on("message", async (ctx) => {
     }
 
     const aiResponse = await getAIResponse(ctx.session.history);
+    const html = markdownToTelegramHtml(aiResponse);
 
     ctx.session.history.push({ role: "assistant", content: aiResponse });
 
-    await sendInChunks(ctx, aiResponse);
+    await sendInChunks(ctx, html);
   } catch (error) {
     console.error("Error generating AI response:", error);
     await ctx.reply("Sorry, there was an error generating a response.");
@@ -127,5 +191,4 @@ bot.on("message", async (ctx) => {
 });
 
 // Start the bot
-bot.start();
-console.log("Bot is running...");
+export default webhookCallback(bot, "https");

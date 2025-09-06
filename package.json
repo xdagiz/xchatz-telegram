@@ -14,6 +14,7 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
     "@types/node": "^24.3.0",
     "typescript": "^5.9.2"
   },
@@ -21,6 +22,8 @@
     "@openrouter/ai-sdk-provider": "^1.1.2",
     "ai": "^5.0.15",
     "dotenv": "^17.2.1",
-    "grammy": "^1.38.1"
+    "grammy": "^1.38.1",
+    "isomorphic-dompurify": "^2.26.0",
+    "markdown-it": "^14.1.0"
   }
 }
