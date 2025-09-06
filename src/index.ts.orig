@@ -1,0 +1,102 @@
+import { Bot, Context, session, type SessionFlavor } from "grammy";
+import "dotenv/config";
+import { type ModelMessage, streamText } from "ai";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+
+const openrouter = createOpenRouter({
+  apiKey: process.env.OPENROUTER_API_KEY!,
+});
+
+interface SessionData {
+  history: string[];
+}
+type MyContext = Context & SessionFlavor<SessionData>;
+
+// Initialize bot with session middleware
+const bot = new Bot<MyContext>(process.env.BOT_TOKEN!);
+
+bot.use(
+  session({
+    initial: (): SessionData => ({ history: [] }),
+  }),
+);
+
+const allowed = [5693262845];
+
+async function sendInChunks(
+  ctx: MyContext,
+  text: string,
+  chunkSize: number = 4096,
+) {
+  for (let i = 0; i < text.length; i += chunkSize) {
+    const chunk = text.slice(i, i + chunkSize);
+    await ctx.reply(chunk, { parse_mode: "Markdown" });
+  }
+}
+
+bot.command("start", async (ctx) => {
+  await ctx.reply(
+    `Hello! 👋 I'm your AI chatbot.\n\nI can have conversations with you and remember our chat history. Use /help to see available commands.`,
+  );
+});
+
+bot.command("history", async (ctx) => {
+  const history = ctx.session.history.map((msg) => `${msg}`);
+  await ctx.reply("Your chat history is empty.");
+});
+
+bot.on("message:text", async (ctx) => {
+  const userId = ctx.from?.id;
+  const userPrompt = ctx.message.text;
+
+  if (!userId) throw new Error("No user");
+  if (!allowed.includes(userId)) {
+    return ctx.reply("Please subscribe to use this bot");
+  }
+
+  try {
+    // get the chat history from session
+    // and generaate the message based on the history
+
+    const history = ctx.session.history || [];
+    const messages: ModelMessage[] = history
+      .slice(-6) // limit to last 6 messages
+      .map((h, i) => ({
+        role: i % 2 === 0 ? "user" : "assistant",
+        content: h,
+      }));
+
+    messages.push({ role: "user", content: userPrompt });
+
+    // save the user prompt and response to session history
+    ctx.session.history.push(userPrompt);
+
+    if (ctx.session.history.length > 12) {
+      ctx.session.history = ctx.session.history.slice(-12); // keep the last 12 messages
+    }
+
+    const { textStream } = streamText({
+      model: openrouter.chat("openai/gpt-oss-20b:free"),
+      messages,
+      temperature: 0.7,
+    });
+
+    //handle the text stream to avoid getting grammy error Bad Request: message is too long if the message is too long break it into multiple messages
+
+    let fullResponse = "";
+
+    for await (const chunk of textStream) {
+      fullResponse += chunk;
+    }
+
+    await bot.api.sendMessage(ctx.from?.id, fullResponse);
+
+    // ctx.reply(text);
+    console.log(fullResponse);
+  } catch (err) {
+    console.error(err);
+    ctx.reply("Error happened");
+  }
+});
+
+bot.start();
