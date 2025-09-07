@@ -8,7 +8,7 @@ import {
   type SessionFlavor,
 } from "grammy";
 import "dotenv/config";
-import { loadHistoryMiddleware, addHistory } from "../src/db/history.js";
+import { addHistory } from "../src/db/history.js";
 import { addHistory, getHistory } from "../src/db/history.js";
 import { ModelMessage } from "ai";
 import { registerCommands } from "../src/commands/_index.js";
