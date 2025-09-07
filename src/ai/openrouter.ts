@@ -23,7 +23,8 @@ const freeModels = [
   "google/gemini-2.0-flash-exp:free",
 ];
 
-const selectedModel = process.env.AI_MODEL ?? freeModels[2];
+// get the ai model from environment variable or use a default one
+const selectedModel = process.env.AI_MODEL || freeModels[4];
 
 export async function getAIResponse(
   history: ModelMessage[],
