@@ -56,7 +56,6 @@ bot.on("message:text", async (ctx) => {
 
   try {
     const history = await getHistory(String(ctx.chat.id), 20);
-    const aiText = await getAIResponse(ctx.session.history);
 
     await ctx.api.sendChatAction(String(ctx.chat.id), "typing");
     const aiText = await getAIResponse([
