@@ -8,7 +8,7 @@ import {
   type SessionFlavor,
 } from "grammy";
 import "dotenv/config";
-import { loadHistoryMiddleware, addHistory } from "../src/db/history.js";
+import { addHistory, getHistory } from "../src/db/history.js";
 import { ModelMessage } from "ai";
 import { registerCommands } from "../src/commands/_index.js";
 import { registerStartCommand } from "../src/commands/start.js";
@@ -46,28 +46,53 @@ bot.on("message:text", async (ctx) => {
 
   if (userMessage.startsWith("/")) {
     console.log("skipped", userMessage);
-    ctx.reply("Invlid command");
+    ctx.reply("Invalid command");
     return;
   } else {
     console.log("false", userMessage);
   }
 
-  ctx.session.history.push({ role: "user", content: userMessage });
-
   await ctx.api.sendChatAction(String(ctx.chat.id), "typing");
 
   try {
-    const aiText = await getAIResponse(ctx.session.history);
+    const history = await getHistory(String(ctx.chat.id), 20);
+
+    await ctx.api.sendChatAction(String(ctx.chat.id), "typing");
+    const aiText = await getAIResponse([
+      { role: "system", content: "You are a helpful AI assistant." },
+      ...history.map((item) => ({
+        role: item.role as "user" | "assistant" | "system",
+        content: item.content,
+      })),
+      { role: "user", content: userMessage },
+    ]);
 
     const html = markdownToTelegramHtml(aiText);
 
-    ctx.session.history.push({ role: "assistant", content: aiText });
-
     if (aiText !== "") {
-      addHistory(String(ctx.chat.id), "assistant", aiText);
-      console.log("user history added to the db");
-      addHistory(String(ctx.chat.id), "user", userMessage);
-      console.log("user history added to the db");
+      try {
+        addHistory(
+          String(ctx.chat.id),
+          String(ctx.from.username),
+          "assistant",
+          aiText,
+        );
+        console.log("user history added to the db");
+      } catch (e) {
+        console.log("error adding history", e);
+      }
+
+      try {
+        addHistory(
+          String(ctx.chat.id),
+          String(ctx.from.username),
+          "user",
+          userMessage,
+        );
+        console.log("user history added to the db");
+      } catch (e) {
+        console.log("error adding history", e);
+      }
       await sendInChunks(ctx, html);
     } else {
       await ctx.reply("Sorry, there was an error generating a response.");
@@ -77,8 +102,6 @@ bot.on("message:text", async (ctx) => {
     console.error("Error generating AI response:", error);
   }
 });
-
-bot.use(loadHistoryMiddleware);
 
 bot.catch((err) => {
   const ctx = err.ctx;
