@@ -23,6 +23,8 @@ const freeModels = [
   "google/gemini-2.0-flash-exp:free",
 ];
 
+const selectedModel = process.env.AI_MODEL ?? freeModels[2];
+
 export async function getAIResponse(
   history: ModelMessage[],
   opts?: { timeoutMs: number; model: string },
@@ -33,7 +35,7 @@ export async function getAIResponse(
 
   try {
     const { textStream } = streamText({
-      model: openrouter.chat(opts?.model ?? "deepseek/deepseek-chat-v3.1:free"),
+      model: openrouter.chat(selectedModel),
       messages: history,
       abortSignal: controller.signal,
     });
