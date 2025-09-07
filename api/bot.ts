@@ -11,7 +11,6 @@ import "dotenv/config";
 import { addHistory, getHistory } from "../src/db/history.js";
 import { ModelMessage } from "ai";
 import { registerCommands } from "../src/commands/_index.js";
-import { registerStartCommand } from "../src/commands/start.js";
 import { markdownToTelegramHtml } from "../src/utils/markdown.js";
 import { getAIResponse } from "../src/ai/openrouter.js";
 import { sendInChunks } from "./helpers/sendInChunks.js";
@@ -39,6 +38,10 @@ registerCommands(bot);
 
 bot.on("message:text", async (ctx) => {
   const userMessage = ctx.message.text.trim();
+  console.log(ctx.message.message_id);
+  console.log(ctx.chat.id);
+  console.log(`user ${ctx.from.username} is using ai`);
+
   if (!userMessage) {
     await ctx.reply("Please send some text.");
     return;
@@ -49,7 +52,7 @@ bot.on("message:text", async (ctx) => {
     ctx.reply("Invalid command");
     return;
   } else {
-    console.log("false", userMessage);
+    console.log(`user: ${ctx.from.username}:`, userMessage);
   }
 
   await ctx.api.sendChatAction(String(ctx.chat.id), "typing");
@@ -68,6 +71,8 @@ bot.on("message:text", async (ctx) => {
     ]);
 
     const html = markdownToTelegramHtml(aiText);
+    console.log(html);
+    await sendInChunks(ctx, html);
 
     if (aiText !== "") {
       try {
@@ -93,12 +98,11 @@ bot.on("message:text", async (ctx) => {
       } catch (e) {
         console.log("error adding history", e);
       }
-      await sendInChunks(ctx, html);
     } else {
       await ctx.reply("Sorry, there was an error generating a response.");
     }
   } catch (error) {
-    await ctx.reply("Sorry, there was an error generating a response.");
+    await ctx.reply("You've reached your limit. Please try again later.");
     console.error("Error generating AI response:", error);
   }
 });

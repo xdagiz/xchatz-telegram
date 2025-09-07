@@ -1,5 +1,6 @@
 import { getHistory } from "../db/history.js";
 import type { Bot } from "grammy";
+import { markdownToTelegramHtml } from "../utils/markdown.js";
 
 export function registerHistoryCommand(bot: Bot) {
   bot.command("history", async (ctx) => {
@@ -11,13 +12,14 @@ export function registerHistoryCommand(bot: Bot) {
     const formatted = rows
       .map(
         (m) =>
-          `${m.role}: ${typeof m.content === "string" ? m.content : JSON.stringify(m.content)}`,
+          `${m.role}:\n${typeof m.content === "string" ? m.content : JSON.stringify(m.content)}`,
       )
       .join("\n\n");
+
+    const html = markdownToTelegramHtml(formatted);
     await ctx.reply(
-      formatted.length > 4000
-        ? formatted.slice(0, 3900) + "\n\n(...truncated)"
-        : formatted,
+      html.length > 4000 ? html.slice(0, 3900) + "\n\n(...truncated)" : html,
+      { parse_mode: "HTML" },
     );
   });
 }

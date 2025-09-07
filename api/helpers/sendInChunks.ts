@@ -65,11 +65,22 @@ export async function sendInChunks(
   text: string,
   chunkSize: number = 4000,
 ) {
+  // const chatId = ctx.chat?.id!;
+
+  // const initialMessage = ctx.reply("Thinking...");
+
   if (text.length <= chunkSize) {
     // If the text is short enough, send it directly
     await ctx.reply(text, { parse_mode: "HTML" });
     return;
   }
+
+  // await bot.api.editMessageText(
+  //   chatId,
+  //   (await initialMessage).message_id,
+  //   html,
+  //   { parse_mode: "HTML" },
+  // );
 
   // 1. Generate safe, valid HTML chunks
   const chunks = splitHtml(text, chunkSize);

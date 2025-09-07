@@ -24,7 +24,7 @@ const freeModels = [
 ];
 
 // get the ai model from environment variable or use a default one
-const selectedModel = process.env.AI_MODEL || freeModels[4];
+export const selectedModel = process.env.AI_MODEL || freeModels[4];
 
 export async function getAIResponse(
   history: ModelMessage[],
@@ -39,6 +39,7 @@ export async function getAIResponse(
       model: openrouter.chat(selectedModel),
       messages: history,
       abortSignal: controller.signal,
+      maxOutputTokens: 1000,
     });
 
     let fullResponse = "";

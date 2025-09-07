@@ -1,8 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { historyTable } from "./schema.js";
-import { ModelMessage } from "ai";
-import { Middleware } from "grammy";
 
 export async function addHistory(
   userId: string,
