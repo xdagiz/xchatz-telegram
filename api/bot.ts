@@ -8,7 +8,6 @@ import {
   type SessionFlavor,
 } from "grammy";
 import "dotenv/config";
-import { addHistory } from "../src/db/history.js";
 import { addHistory, getHistory } from "../src/db/history.js";
 import { ModelMessage } from "ai";
 import { registerCommands } from "../src/commands/_index.js";
@@ -53,22 +52,21 @@ bot.on("message:text", async (ctx) => {
     console.log("false", userMessage);
   }
 
-  ctx.session.history.push({ role: "user", content: userMessage });
   await ctx.api.sendChatAction(String(ctx.chat.id), "typing");
 
   try {
-    // const history = await getHistory(String(ctx.chat.id), 20);
+    const history = await getHistory(String(ctx.chat.id), 20);
     const aiText = await getAIResponse(ctx.session.history);
 
-    // await ctx.api.sendChatAction(String(ctx.chat.id), "typing");
-    // const aiText = await getAIResponse([
-    //   { role: "system", content: "You are a helpful AI assistant." },
-    //   ...history.map((item) => ({
-    //     role: item.role as "user" | "assistant" | "system",
-    //     content: item.content,
-    //   })),
-    //   { role: "user", content: userMessage },
-    // ]);
+    await ctx.api.sendChatAction(String(ctx.chat.id), "typing");
+    const aiText = await getAIResponse([
+      { role: "system", content: "You are a helpful AI assistant." },
+      ...history.map((item) => ({
+        role: item.role as "user" | "assistant" | "system",
+        content: item.content,
+      })),
+      { role: "user", content: userMessage },
+    ]);
 
     const html = markdownToTelegramHtml(aiText);
 
