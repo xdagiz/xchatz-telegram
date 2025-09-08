@@ -71,7 +71,7 @@ bot.on("message:text", async (ctx) => {
     ]);
 
     const html = markdownToTelegramHtml(aiText);
-    console.log(html);
+    console.log("Generated:\n", html);
     await sendInChunks(ctx, html);
 
     if (aiText !== "") {
